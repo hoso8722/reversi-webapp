@@ -1,11 +1,6 @@
 import express from "express"
 import "express-async-errors"
 import morgan from "morgan"
-import mysql from "mysql2/promise"
-import { GameGateway } from "./data-access/gameGateway"
-import { MoveGateway } from "./data-access/moveGateway"
-import { SquareGateway } from "./data-access/squareGateway"
-import { TurnGateway } from "./data-access/turnGateway"
 import { gameRouter } from "./presentation/gameRouter"
 import { turnRouter } from "./presentation/turnRouter"
 

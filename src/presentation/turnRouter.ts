@@ -1,11 +1,27 @@
 import express from "express"
-import { TurnService } from "../application/turnService"
+import { FindLatestGameTurnByTurnCountUseCase } from "../application/useCase/findLatestGameTurnByTurnCountUseCase"
+import { RegisterTurnUseCase } from "../application/useCase/registerTurnUseCase"
+import { toDisc } from "../domain/model/turn/disc"
+import { Point } from "../domain/model/turn/point"
+import { GameMySQLRepository } from "../infrastructure/repository/game/gameMySQLRepository"
+import { GameResultMySQLRepository } from "../infrastructure/repository/gameResult/gameResultMySQLRepository"
+import { TurnMySQLRepository } from "../infrastructure/repository/turn/turnMySQLRepository"
 
 export const turnRouter = express.Router()
 
-const turnService = new TurnService()
+const findLatestGameTurnByTurnCount = new FindLatestGameTurnByTurnCountUseCase(
+  new TurnMySQLRepository(),
+  new GameMySQLRepository(),
+  new GameResultMySQLRepository()
+)
 
-interface TurnGetResposeBody {
+const registerTurnUseCase = new RegisterTurnUseCase(
+  new TurnMySQLRepository(),
+  new GameMySQLRepository(),
+  new GameResultMySQLRepository()
+)
+
+interface TurnGetResponseBody {
   turnCount: number
   board: number[][]
   nextDisc: number | null
@@ -14,10 +30,10 @@ interface TurnGetResposeBody {
 
 turnRouter.get(
   "/api/games/latest/turns/:turnCount",
-  async (req, res: express.Response<TurnGetResposeBody>) => {
+  async (req, res: express.Response<TurnGetResponseBody>) => {
     const turnCount = parseInt(req.params.turnCount)
 
-    const output = await turnService.findLatestGameTurnByTurnCount(turnCount)
+    const output = await findLatestGameTurnByTurnCount.run(turnCount)
 
     const responseBody = {
       turnCount: output.turnCount,
@@ -25,6 +41,7 @@ turnRouter.get(
       nextDisc: output.nextDisc ?? null,
       winnerDisc: output.winnerDisc ?? null,
     }
+
     res.json(responseBody)
   }
 )
@@ -46,7 +63,7 @@ turnRouter.post(
     const x = req.body.move.x
     const y = req.body.move.y
 
-    await turnService.registerTurn(turnCount, disc, x, y)
+    await registerTurnUseCase.run(turnCount, toDisc(disc), new Point(x, y))
 
     res.status(201).end()
   }

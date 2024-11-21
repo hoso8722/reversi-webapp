@@ -1,9 +1,11 @@
 import mysql from "mysql2/promise"
-import { Game } from "./game"
-import { GameGateway } from "../../infrastructure/gameGateway"
+import { Game } from "../../../domain/model/game/game"
+import { GameGateway } from "./gameGateway"
+import { GameRepository } from "../../../domain/model/game/gameRepository"
 
 const gameGateway = new GameGateway()
-export class GameRepository {
+
+export class GameMySQLRepository implements GameRepository {
   async findLatest(conn: mysql.Connection): Promise<Game | undefined> {
     const gameRecord = await gameGateway.findLatest(conn)
 

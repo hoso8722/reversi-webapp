@@ -42,10 +42,10 @@ body {
   border-radius: 50%;
 }
 
-.black {
+.dark {
   background-color: black;
 }
 
-.white {
+.light {
   border: 1px solid;
 }

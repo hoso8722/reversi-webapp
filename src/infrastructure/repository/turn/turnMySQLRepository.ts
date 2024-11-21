@@ -1,19 +1,21 @@
 import mysql from "mysql2/promise"
-import { Turn } from "./turn/turn"
-import { TurnGateway } from "../infrastructure/turnGateway"
-import { SquareGateway } from "../infrastructure/squareGateway"
-import { MoveGateway } from "../infrastructure/moveGateway"
-import { Move } from "./turn/move"
-import { toDisc } from "./turn/disc"
-import { Point } from "./turn/point"
-import { Board } from "./turn/board"
+import { DomainError } from "../../../domain/error/DomainError"
+import { Board } from "../../../domain/model/turn/board"
+import { toDisc } from "../../../domain/model/turn/disc"
+import { Move } from "../../../domain/model/turn/move"
+import { Point } from "../../../domain/model/turn/point"
+import { Turn } from "../../../domain/model/turn/turn"
+import { TurnRepository } from "../../../domain/model/turn/turnRepository"
+import { MoveGateway } from "./moveGateway"
+import { SquareGateway } from "./squareGateway"
+import { TurnGateway } from "./turnGateway"
 
 const turnGateway = new TurnGateway()
 const moveGateway = new MoveGateway()
 const squareGateway = new SquareGateway()
 
-export class TurnRepository {
-  async findForGameIdAndTurnCOunt(
+export class TurnMySQLRepository implements TurnRepository {
+  async findForGameIdAndTurnCount(
     conn: mysql.Connection,
     gameId: number,
     turnCount: number
@@ -24,7 +26,7 @@ export class TurnRepository {
       turnCount
     )
     if (!turnRecord) {
-      throw new Error("Specified turn not found")
+      throw new DomainError("SpecifiedTurnNotFound", "Specified turn not found")
     }
 
     const squareRecords = await squareGateway.findForTurnId(conn, turnRecord.id)
@@ -36,13 +38,18 @@ export class TurnRepository {
     const moveRecord = await moveGateway.findForTurnId(conn, turnRecord.id)
     let move: Move | undefined
     if (moveRecord) {
-      toDisc(moveRecord.disc), new Point(moveRecord.x, moveRecord.y)
+      move = new Move(
+        toDisc(moveRecord.disc),
+        new Point(moveRecord.x, moveRecord.y)
+      )
     }
 
+    const nextDisc =
+      turnRecord.nextDisc === null ? undefined : toDisc(turnRecord.nextDisc)
     return new Turn(
       gameId,
       turnCount,
-      toDisc(turnRecord.nextDisc),
+      nextDisc,
       move,
       new Board(board),
       turnRecord.endAt
@@ -57,6 +64,7 @@ export class TurnRepository {
       turn.nextDisc,
       turn.endAt
     )
+
     await squareGateway.insertAll(conn, turnRecord.id, turn.board.discs)
 
     if (turn.move) {

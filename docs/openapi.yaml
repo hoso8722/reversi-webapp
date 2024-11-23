@@ -23,12 +23,21 @@ paths:
                         id:
                           type: integer
                           example: 1
+                        darkMoveCount:
+                          type: integer
+                          example: 1
+                        lightMoveCount:
+                          type: integer
+                          example: 1
                         winnerDisc:
                           type: integer
                           example: 1
                         startedAt:
                           type: string
-                          example: 2017-07-21T17:32:58
+                          example: 2017-07-21T17:32:58Z
+                        endAt:
+                          type: string
+                          example: 2017-07-21T17:32:58Z
     post:
       responses:
         201:
